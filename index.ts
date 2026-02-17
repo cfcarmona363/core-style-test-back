@@ -30,6 +30,29 @@ function parseBody(req: any) {
 export default async function handler(req: any, res: any): Promise<void> {
   const url = (req.url || "").split("?")[0];
 
+  function setCorsHeaders(resLocal: any, reqLocal: any) {
+    const origin = process.env.CORS_ORIGIN || "*";
+    resLocal.setHeader("Access-Control-Allow-Origin", origin);
+    resLocal.setHeader(
+      "Access-Control-Allow-Methods",
+      "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
+    );
+    const reqHeaders =
+      reqLocal?.headers?.["access-control-request-headers"] ||
+      reqLocal?.headers?.["Access-Control-Request-Headers"] ||
+      "Content-Type,Authorization";
+    resLocal.setHeader("Access-Control-Allow-Headers", reqHeaders);
+    resLocal.setHeader("Access-Control-Allow-Credentials", "true");
+  }
+
+  setCorsHeaders(res, req);
+
+  if (req.method === "OPTIONS") {
+    res.statusCode = 204;
+    res.end();
+    return;
+  }
+
   if (req.method === "GET" && (url === "/health" || url === "/")) {
     sendJson(res, 200, { ok: true } as HealthResponse);
     return;
