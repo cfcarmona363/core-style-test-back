@@ -14,14 +14,10 @@
   "description": "",
   "dependencies": {
     "@notionhq/client": "^5.9.0",
-    "cors": "^2.8.6",
     "dotenv": "^17.2.3",
-    "express": "^5.2.1",
     "nodemailer": "^7.0.12"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.17",
-    "@types/express": "^5.0.0",
     "@types/node": "^22.0.0",
     "@types/nodemailer": "^7.0.10",
     "tsx": "^4.19.2",
