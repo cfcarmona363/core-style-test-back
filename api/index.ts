@@ -45,7 +45,7 @@ app.use(express.json({ limit: "1mb" }));
  * Email is sent via Gmail and appears as sent from GMAIL_USER.
  */
 app.post(
-  "/send-email",
+  "/api/send-email",
   async (
     req: Request<
       object,
@@ -136,4 +136,4 @@ app.use((req: Request, res: Response) => {
   res.status(404).json({ error: "Not found" });
 });
 
-module.exports = app;
+export default app;
