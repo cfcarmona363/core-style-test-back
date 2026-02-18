@@ -13,25 +13,27 @@ import type {
 
 const app = express();
 
-// CORS middleware - must be before route handlers
-app.use((req, res, next) => {
-  res.setHeader(
-    "Access-Control-Allow-Origin",
-    "https://core-style-test-front.vercel.app",
-  );
-  res.setHeader(
-    "Access-Control-Allow-Methods",
-    "GET, POST, PUT, DELETE, OPTIONS",
-  );
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  next();
-});
+const ALLOWED_ORIGINS = [
+  "https://core-style-test-front.vercel.app",
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "http://localhost:5173",
+];
 
-// Handle preflight requests
-app.options("*", (req: Request, res: Response) => {
-  res.status(200).end();
-});
+// CORS configuration
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true,
+  }),
+);
 
 app.use(express.json({ limit: "1mb" }));
 
@@ -43,7 +45,7 @@ app.use(express.json({ limit: "1mb" }));
  * Email is sent via Gmail and appears as sent from GMAIL_USER.
  */
 app.post(
-  "/send-email",
+  "/api/send-email",
   async (
     req: Request<
       object,
@@ -125,12 +127,12 @@ app.get("/health", (_req: Request, res: Response<HealthResponse>): void => {
   res.json({ ok: true });
 });
 
-// For local development only
-if (process.env.NODE_ENV !== "production") {
+// Local development server
+if (process.env.NODE_ENV !== "production" && require.main === module) {
   const PORT = Number(process.env.PORT) || 3000;
   app.listen(PORT, () => {
     console.log(`Mail service listening on port ${PORT}`);
   });
 }
 
-export default app;
+module.exports = app;
