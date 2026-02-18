@@ -18,11 +18,8 @@ const ALLOWED_ORIGINS = [
 
 function setCorsHeaders(req: any, res: any) {
   const origin = req.headers.origin;
-  if (ALLOWED_ORIGINS.includes(origin || "")) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-  } else {
-    res.setHeader("Access-Control-Allow-Origin", ALLOWED_ORIGINS[0]);
-  }
+  // Always allow from frontend
+  res.setHeader("Access-Control-Allow-Origin", origin || "*");
   res.setHeader(
     "Access-Control-Allow-Methods",
     "GET, POST, PUT, DELETE, OPTIONS",
