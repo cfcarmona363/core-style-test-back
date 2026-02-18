@@ -1,6 +1,4 @@
 import "dotenv/config";
-import express, { type Request, type Response } from "express";
-import cors from "cors";
 import { sendEmail } from "./mail";
 import { saveRow } from "./saveData";
 import type {
@@ -11,54 +9,68 @@ import type {
   HealthResponse,
 } from "./types";
 
-const app = express();
-app.use(
-  cors({
-    origin: ["https://core-style-test-front.vercel.app"],
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
-  }),
-);
-app.use(express.json({ limit: "1mb" }));
+const ALLOWED_ORIGINS = ["https://core-style-test-front.vercel.app"];
 
-const PORT = Number(process.env.PORT) || 3000;
+function setCorsHeaders(
+  res: any,
+  origin: string | undefined,
+): Record<string, string> {
+  const corsOrigin =
+    origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  res.setHeader("Access-Control-Allow-Origin", corsOrigin);
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  return {};
+}
 
-/**
- * POST /send-email
- *
- * Body (JSON): to, subject?, html, text?, replyTo?, formData?
- * If formData is present, it is saved to Notion after the email is sent successfully.
- * Email is sent via Gmail and appears as sent from GMAIL_USER.
- */
-app.post(
-  "/send-email",
-  async (
-    req: Request<
-      object,
-      SendEmailSuccessResponse | SendEmailErrorResponse,
-      SendEmailBody
-    >,
-    res: Response<SendEmailSuccessResponse | SendEmailErrorResponse>,
-  ): Promise<void> => {
+function parseBody(body: any): any {
+  if (typeof body === "string") {
     try {
+      return JSON.parse(body);
+    } catch (_) {
+      return {};
+    }
+  }
+  return body || {};
+}
+
+export default async function handler(req: any, res: any): Promise<void> {
+  const origin = req.headers.origin;
+  setCorsHeaders(res, origin);
+
+  if (req.method === "OPTIONS") {
+    res.status(200).end();
+    return;
+  }
+
+  if (req.method === "GET" && req.url === "/health") {
+    res.status(200).json({ ok: true } as HealthResponse);
+    return;
+  }
+
+  if (req.method === "POST" && req.url === "/send-email") {
+    try {
+      const body = parseBody(req.body);
       console.log(
         "[send-email] Request body keys:",
-        Object.keys(req.body ?? {}),
+        Object.keys(body ?? {}),
         "has formData:",
-        "formData" in (req.body ?? {}),
+        "formData" in (body ?? {}),
       );
-      const { to, subject, html, text, replyTo } = req.body;
+
+      const { to, subject, html, text, replyTo } = body as SendEmailBody;
 
       if (!to || typeof to !== "string") {
-        res
-          .status(400)
-          .json({ error: 'Missing or invalid "to" (recipient email)' });
+        res.status(400).json({
+          error: 'Missing or invalid "to" (recipient email)',
+        } as SendEmailErrorResponse);
         return;
       }
       if (html === undefined || html === null) {
-        res
-          .status(400)
-          .json({ error: 'Missing "html" (email body as string)' });
+        res.status(400).json({
+          error: 'Missing "html" (email body as string)',
+        } as SendEmailErrorResponse);
         return;
       }
 
@@ -70,7 +82,7 @@ app.post(
         replyTo: replyTo != null ? String(replyTo).trim() : undefined,
       });
 
-      const formData = req.body.formData as FormData | undefined;
+      const formData = body.formData as FormData | undefined;
       if (formData != null && typeof formData === "object") {
         try {
           await saveRow(formData);
@@ -80,14 +92,13 @@ app.post(
           console.error("Save to Notion after email:", saveMessage);
           res.status(500).json({
             error: `Email was sent but saving to Notion failed: ${saveMessage}`,
-          });
+          } as SendEmailErrorResponse);
           return;
         }
       }
 
       const successResponse: SendEmailSuccessResponse = {
         success: true,
-        // messageId: result.messageId,
         messageId: "1234567890",
       };
       res.status(200).json(successResponse);
@@ -102,18 +113,13 @@ app.post(
         res.status(500).json({
           error:
             "Server mail configuration error. Check GMAIL_USER and GMAIL_APP_PASSWORD.",
-        });
+        } as SendEmailErrorResponse);
         return;
       }
-      res.status(500).json({ error: message });
+      res.status(500).json({ error: message } as SendEmailErrorResponse);
     }
-  },
-);
+    return;
+  }
 
-app.get("/health", (_req: Request, res: Response<HealthResponse>): void => {
-  res.json({ ok: true });
-});
-
-app.listen(PORT, () => {
-  console.log(`Mail service listening on port ${PORT}`);
-});
+  res.status(404).json({ error: "Not found" });
+}
