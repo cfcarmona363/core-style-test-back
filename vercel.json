@@ -1,4 +1,11 @@
 {
   "version": 2,
-  "routes": [{ "src": "/(.*)", "dest": "/api/index.js" }]
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "routes": [{ "src": "/(.*)", "dest": "/dist/api/index.js" }],
+  "functions": {
+    "api/index.ts": {
+      "runtime": "nodejs20.x"
+    }
+  }
 }
