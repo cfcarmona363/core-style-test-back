@@ -2,5 +2,5 @@
   "version": 2,
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "routes": [{ "src": "/(.*)", "dest": "/api/index.js" }]
+  "routes": [{ "src": "/(.*)", "dest": "/functions/index.js" }]
 }

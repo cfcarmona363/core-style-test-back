@@ -1,5 +1,5 @@
 import "dotenv/config";
-const app = require("./api/index");
+const app = require("./functions/index");
 
 // Local development server
 if (process.env.NODE_ENV !== "production" && require.main === module) {
