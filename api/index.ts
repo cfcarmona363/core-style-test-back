@@ -62,7 +62,10 @@ export default async function handler(req: any, res: any): Promise<void> {
     return;
   }
 
-  if (req.method === "POST" && req.url === "/api/send-email") {
+  if (
+    req.method === "POST" &&
+    (req.url === "/send-email" || req.url?.startsWith("/send-email?"))
+  ) {
     try {
       const body = parseBody(req.body);
       console.log(
