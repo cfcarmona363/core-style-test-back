@@ -9,14 +9,16 @@ import type {
   HealthResponse,
 } from "./types";
 
-const ALLOWED_ORIGINS = ["https://core-style-test-front.vercel.app"];
+const ALLOWED_ORIGINS = [
+  "https://core-style-test-front.vercel.app",
+  "http://localhost:3000",
+];
 
 function setCorsHeaders(
   res: any,
   origin: string | undefined,
 ): Record<string, string> {
-  const corsOrigin =
-    origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  const corsOrigin = ALLOWED_ORIGINS.includes(origin || "") ? origin : "*";
   res.setHeader("Access-Control-Allow-Origin", corsOrigin);
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
@@ -44,12 +46,18 @@ export default async function handler(req: any, res: any): Promise<void> {
     return;
   }
 
-  if (req.method === "GET" && req.url === "/health") {
+  if (
+    req.method === "GET" &&
+    (req.url === "/health" || req.url === "/api/health")
+  ) {
     res.status(200).json({ ok: true } as HealthResponse);
     return;
   }
 
-  if (req.method === "POST" && req.url === "/send-email") {
+  if (
+    req.method === "POST" &&
+    (req.url === "/send-email" || req.url === "/api/send-email")
+  ) {
     try {
       const body = parseBody(req.body);
       console.log(
